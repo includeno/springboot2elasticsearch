@@ -1,0 +1,44 @@
+version: '3'
+services:
+  es:
+    image: elasticsearch:7.17.7
+    container_name: "elasticsearch-container"
+    restart: on-failure
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - node.name=es01
+      - cluster.name=es-cluster-ai66
+      - cluster.initial_master_nodes=es01
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    # 挂载分词器 /usr/share/elasticsearch/plugins/ik
+    volumes:
+      - ./plugins:/usr/share/elasticsearch/plugins
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    networks:
+      - elastic
+  kibana:
+    image: kibana:7.17.7
+    container_name: "kibana-container"
+    restart: on-failure
+    ports:
+      - "5601:5601"
+    environment:
+      SERVER_NAME: localhost_kibana
+      ELASTICSEARCH_HOSTS: http://es:9200
+    networks:
+      - elastic
+    depends_on:
+      - es
+networks:
+  elastic:
+    driver: bridge
